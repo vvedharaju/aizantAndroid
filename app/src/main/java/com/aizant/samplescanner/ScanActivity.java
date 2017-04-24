@@ -147,22 +147,15 @@ public class ScanActivity extends AppCompatActivity {
 
         protected String doInBackground(String... barcodes) {
             try {
-                SharedPreferences settings = getPreferences(MODE_PRIVATE);
-                String cookie = settings.getString(CURRENT_SESSION, null);
-
-                if (cookie == null) {
-                    throw new Exception("Please login. If already logged in, please logout and login");
-                }
-
                 URL url = new URL(BASE_URL + "/barcode");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setReadTimeout(15000 /* milliseconds */);
                 conn.setRequestProperty("Content-Type", "text/html; charset=utf-8");
-                conn.setRequestProperty("Cookie", cookie);
                 conn.setConnectTimeout(15000 /* milliseconds */);
                 conn.setRequestMethod("POST");
                 conn.setDoInput(true);
                 conn.setDoOutput(true);
+                conn.connect();
 
                 OutputStream os = conn.getOutputStream();
                 byte[] barcodeBytes = barcodes[0].getBytes("UTF-8");
@@ -189,6 +182,7 @@ public class ScanActivity extends AppCompatActivity {
 
                 }
                 else {
+                    System.out.println("VEDHAAA " + responseCode + " " + conn.getResponseMessage());
                     return "Unexpected response from server";
                 }
             } catch(Exception e) {
