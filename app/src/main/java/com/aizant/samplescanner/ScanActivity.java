@@ -25,9 +25,10 @@ import java.nio.charset.StandardCharsets;
 public class ScanActivity extends AppCompatActivity {
 
     static final String SCAN = "com.google.zxing.client.android.SCAN";
-    static final String IP_ADDRESS = "192.168.1.12:8080";
+    static final String IP_ADDRESS = "192.168.1.5:8080";
     static final String BASE_URL = "http://" + IP_ADDRESS + "/aizantit";
     static final String CURRENT_SESSION = "currentSession";
+    static final String TOKEN =  "30652800-6672-41a8-9605-292dbdc95734";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,10 +87,12 @@ public class ScanActivity extends AppCompatActivity {
             try {
                 URL url = new URL(BASE_URL + "/");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-//                conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
                 conn.setRequestMethod("GET");
                 conn.setDoInput(true);
                 conn.setDoOutput(true);
+                conn.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;");
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3)" +
+                        " AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36");
                 conn.connect();
 
                 String setCookieHeaderField = conn.getHeaderField("Set-Cookie");
@@ -99,40 +102,64 @@ public class ScanActivity extends AppCompatActivity {
 
                 Log.e("AIZANT", "COOOKIE HEADER FIELD " + setCookieHeaderField);
 
-                String username = "ravi";
-                String password = "ravi";
+                String username = "admin";
+                String password = "admin";
                 String data = URLEncoder.encode("username", "UTF-8")
                         + "=" + URLEncoder.encode(username, "UTF-8");
 
                 data += "&" + URLEncoder.encode("password", "UTF-8") + "="
                         + URLEncoder.encode(password, "UTF-8");
 
+                System.out.println("PASSWORDDDDD " + data);
 
                 URL loginUrl = new URL(BASE_URL + "/j_spring_security_check");
                 HttpURLConnection loginConn = (HttpURLConnection) loginUrl.openConnection();
-                loginConn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-                loginConn.setRequestProperty("charset", "utf-8");
+                loginConn.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;");
+                loginConn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
                 loginConn.setRequestProperty("Cookie", setCookieHeaderField);
+                loginConn.setRequestProperty("Referer", BASE_URL + "/");
+                loginConn.setRequestProperty("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3)" +
+                        " AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36");
                 loginConn.setRequestMethod("POST");
                 loginConn.setDoInput(true);
                 loginConn.setDoOutput(true);
-                loginConn.connect();
-
 
                 OutputStreamWriter wr = new OutputStreamWriter(loginConn.getOutputStream());
                 wr.write(data);
                 wr.flush();
+                wr.close();
 
                 int responseCode = loginConn.getResponseCode();
                 Log.e("AIZANT", "RESPONSE CODEEEEE " + responseCode);
+
+                String loginCookieField = loginConn.getHeaderField("Set-Cookie");
+                System.out.println("LOGIN COOKIE " + loginCookieField);
                 if (responseCode != 200) {
                     throw new Exception("UNABLE TO LOGIN");
                 }
+
+
+                    BufferedReader in=new BufferedReader(
+                            new InputStreamReader(loginConn.getInputStream()));
+                    StringBuffer sb = new StringBuffer("");
+                    String line="";
+
+                    System.out.println("GOT HEREEEEE");
+                    while((line = in.readLine()) != null) {
+                        System.out.println("GOT INSIDEEEEE" + line + "  no contents");
+                        sb.append(line);
+                        break;
+                    }
+                    System.out.println("GOT DONE");
+
+                    in.close();
+
+
                 SharedPreferences settings = getPreferences(MODE_PRIVATE);
                 SharedPreferences.Editor editor = settings.edit();
-                editor.putString(CURRENT_SESSION, setCookieHeaderField);
+                editor.putString(CURRENT_SESSION, loginCookieField);
                 editor.commit();
-                return  setCookieHeaderField;
+                return  loginCookieField;
             } catch (Exception e) {
                 Log.e("AIZANT", "GOT ITTTTTT " + e.getMessage());
                 Toast.makeText(getApplicationContext(), e.getMessage(),Toast.LENGTH_LONG).show();
@@ -149,6 +176,8 @@ public class ScanActivity extends AppCompatActivity {
             try {
                 SharedPreferences settings = getPreferences(MODE_PRIVATE);
                 String cookie = settings.getString(CURRENT_SESSION, null);
+
+                System.out.println("COOKIEEE SENDINGGG " + cookie);
 
                 if (cookie == null) {
                     throw new Exception("Please login. If already logged in, please logout and login");
