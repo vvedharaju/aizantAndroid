@@ -72,7 +72,7 @@ public class LoginActivity extends AppCompatActivity {
                 wr.close();
 
                 int responseCode = loginConn.getResponseCode();
-                
+
                 if (responseCode != 200) {
                     throw new Exception("UNABLE TO LOGIN");
                 }
@@ -82,6 +82,9 @@ public class LoginActivity extends AppCompatActivity {
                 editor.putString(USERNAME, username);
                 editor.putString(PASSWORD, password);
                 editor.commit();
+
+                Intent intent = new Intent(LoginActivity.this, ScanActivity.class);
+                startActivity(intent);
 
                 return  "Successfully logged in";
             } catch (Exception e) {
@@ -93,8 +96,6 @@ public class LoginActivity extends AppCompatActivity {
         protected void onPostExecute(String result) {
             Toast.makeText(getApplicationContext(), result,
                     Toast.LENGTH_LONG).show();
-            Intent intent = new Intent(LoginActivity.this, ScanActivity.class);
-            startActivity(intent);
         }
 
     }
